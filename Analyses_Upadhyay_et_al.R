@@ -13,47 +13,47 @@ library(growth)
 # UCLA data
 ##############
 
-# Read in pass B2
-b2bb8 <- read_xlsx("Pass B2 - All Machines, Main Stats.xlsx", sheet = "BB8")
-b2r2nu <- read_xlsx("Pass B2 - All Machines, Main Stats.xlsx", sheet = "R2Nu")
-b2r2sar <- read_xlsx("Pass B2 - All Machines, Main Stats.xlsx", sheet = "R2Sar")
-b2253 <- read_xlsx("Pass B2 - All Machines, Main Stats.xlsx", sheet = "253")
+# Read in pass AnalysisA
+AnalysisAbb8 <- read_xlsx("Pass AnalysisA - All Machines, Main Stats.xlsx", sheet = "BB8")
+AnalysisAr2nu <- read_xlsx("Pass AnalysisA - All Machines, Main Stats.xlsx", sheet = "R2Nu")
+AnalysisAr2sar <- read_xlsx("Pass AnalysisA - All Machines, Main Stats.xlsx", sheet = "R2Sar")
+AnalysisA253 <- read_xlsx("Pass AnalysisA - All Machines, Main Stats.xlsx", sheet = "253")
 additional <- read_xlsx("Additional standards Bulk and Clumped.xlsx")
 
-b2bb8$Pass <- "AnalysisA"
-b2bb8$Instrument <- "Config3B"
+AnalysisAbb8$Pass <- "AnalysisA"
+AnalysisAbb8$Instrument <- "Config3B"
 
-b2r2nu$Pass <- "AnalysisA"
-b2r2nu$Instrument <- "Config3A"
+AnalysisAr2nu$Pass <- "AnalysisA"
+AnalysisAr2nu$Instrument <- "Config3A"
 
-b2r2sar$Pass <- "AnalysisA"
-b2r2sar$Instrument <- "Config2"
+AnalysisAr2sar$Pass <- "AnalysisA"
+AnalysisAr2sar$Instrument <- "Config2"
 
-b2253$Pass <- "AnalysisA"
-b2253$Instrument <- "Config1"
+AnalysisA253$Pass <- "AnalysisA"
+AnalysisA253$Instrument <- "Config1"
 
 additional$Pass <- "AnalysisA"
 
-# Read in pass B3
-b3bb8 <- read_xlsx("Pass B3 - All Machines, Main Stats.xlsx", sheet = "BB8")
-b3r2nu <- read_xlsx("Pass B3 - All Machines, Main Stats.xlsx", sheet = "R2Nu")
-b3r2sar <- read_xlsx("Pass B3 - All Machines, Main Stats.xlsx", sheet = "R2Sar")
-b3253 <- read_xlsx("Pass B3 - All Machines, Main Stats.xlsx", sheet = "253")
+# Read in pass AnalysisB
+AnalysisBbb8 <- read_xlsx("Pass AnalysisB - All Machines, Main Stats.xlsx", sheet = "BB8")
+AnalysisBr2nu <- read_xlsx("Pass AnalysisB - All Machines, Main Stats.xlsx", sheet = "R2Nu")
+AnalysisBr2sar <- read_xlsx("Pass AnalysisB - All Machines, Main Stats.xlsx", sheet = "R2Sar")
+AnalysisAnalysisA53 <- read_xlsx("Pass AnalysisB - All Machines, Main Stats.xlsx", sheet = "253")
 
-b3bb8$Pass <- "AnalysisB"
-b3bb8$Instrument <- "Config3B"
+AnalysisBbb8$Pass <- "AnalysisB"
+AnalysisBbb8$Instrument <- "Config3B"
 
-b3r2nu$Pass <- "AnalysisB"
-b3r2nu$Instrument <- "Config3A"
+AnalysisBr2nu$Pass <- "AnalysisB"
+AnalysisBr2nu$Instrument <- "Config3A"
 
-b3r2sar$Pass <- "AnalysisB"
-b3r2sar$Instrument <- "Config2"
+AnalysisBr2sar$Pass <- "AnalysisB"
+AnalysisBr2sar$Instrument <- "Config2"
 
-b3253$Pass <- "AnalysisB"
-b3253$Instrument <- "Config1"
+AnalysisAnalysisA53$Pass <- "AnalysisB"
+AnalysisAnalysisA53$Instrument <- "Config1"
 
 # Concatenate data
-alldata <- Reduce(function(x, y) merge(x, y, all=TRUE), list(b2bb8, b2r2nu, b2r2sar, b2253, b3bb8, b3r2nu, b3r2sar, b3253, additional))
+alldata <- Reduce(function(x, y) merge(x, y, all=TRUE), list(AnalysisAbb8, AnalysisAr2nu, AnalysisAr2sar, AnalysisA253, AnalysisBbb8, AnalysisBr2nu, AnalysisBr2sar, AnalysisAnalysisA53, additional))
 
 # Standardize names
 names(alldata)<-gsub("\\s","",names(alldata))
@@ -73,7 +73,7 @@ alldata <- alldata %>%
          d18OVPDB.Final.SE = sd(d18OVPDB.Final.)/sqrt(length(d18OVPDB.Final.))
   )
 
-# Drop singular observation (Carrara Marble, Pass B2, Config 3A)
+# Drop singular observation (Carrara Marble, Pass AnalysisA, Config 3A)
 alldata <- alldata[!is.na(alldata$D47CDES.Final.SE),]
 
 # Produce a data summary
@@ -251,18 +251,15 @@ accuracy %>%
   group_by(Standard, Instrument, Pass)  %>%
   summarise(meanerr = mean(error))
 
-# Test for outliers
+# Test for outliers using percent error
 test <- rosnerTest(accuracy$error, k = 10)
 test
 
+# Test for outliers using absolute error
 test2 <- rosnerTest(accuracy$absoluteerror, k = 10)
+test2
 
-rosnerTest(accuracy$absoluteerror, k = 10)
-
-test$all.stats$Obs.Num
-
-
-# Drop nine true outilers
+# Drop true outilers
 accuracy_outliersremoved_pcterr <- accuracy[-dput(as.numeric(test$all.stats$Obs.Num[test$all.stats$Outlier == TRUE])),]
 accuracy_outliersremoved_absterr <- accuracy[-dput(as.numeric(test2$all.stats$Obs.Num[test2$all.stats$Outlier == TRUE])),]
 
@@ -275,6 +272,7 @@ summary(accuracy_outliersremoved_absterr$absoluteerror)
 
 hist(accuracy_outliersremoved$absoluteerror)
 
+# Absolute error
 errtable_absterr <- accuracy_outliersremoved_absterr %>%
   group_by(Standard, Instrument, Pass)  %>%
   summarise(meanerr = mean(error),
@@ -288,6 +286,7 @@ errtable_absterr <- accuracy_outliersremoved_absterr %>%
 
 write.csv(errtable_absterr, "errortable_absterr.csv", row.names = FALSE)
 
+# Percent error
 errtable_pcterr <- accuracy_outliersremoved_pcterr %>%
   group_by(Standard, Instrument, Pass)  %>%
   summarise(meanerr = mean(error),
@@ -301,6 +300,7 @@ errtable_pcterr <- accuracy_outliersremoved_pcterr %>%
 
 write.csv(errtable_pcterr, "errortable_pcterr.csv", row.names = FALSE)
 
+# Histograms of errors
 ac1 <- ggplot(accuracy, aes(x=error)) + geom_histogram(bins = 50, color = "gray60", fill = "gray80") + theme_classic() + ylab("Count") + xlab("Error (%)") +
   xlim(-40,40) + ylim(0,1045) + geom_vline(xintercept=c(-3.24324,3.36606), linetype="dotted") + geom_vline(xintercept = 0.03292, linetype = "solid")
 
@@ -319,8 +319,6 @@ ac5 <- ggplot(accuracy_outliersremoved_absterr, aes(x=error)) + geom_histogram(b
 ac6 <- ggplot(accuracy_outliersremoved_absterr, aes(x=absoluteerror)) + geom_histogram(bins = 50, color = "gray60", fill = "gray80") + theme_classic() + ylab("Count") + xlab("Error (‰)") +
   xlim(-0.17,0.17)+ ylim(0,1045) + geom_vline(xintercept=c(-0.015,0.016), linetype="dotted") + geom_vline(xintercept = 0.0004328, linetype = "solid")
 
-
-
 cowplot::plot_grid(ac1, ac2, ac3, ac4, ac5, ac6, 
                    ncol = 2, nrow = 3,
                    labels=c('A', 'B', 'C', 'D', 'E', 'F'))
@@ -330,15 +328,15 @@ ggsave("SIFig1.tiff", scale = 1.25, dpi = 1200, width = 5.5, units = "in", compr
 
 # Optional figures
 
-# Pass B3
-ggplot(alldatats[alldatats$Pass == "B3",], aes(x=DateTime, y=D47CDES.Final., color=Standard)) + geom_point() + geom_path() + facet_wrap(~Instrument) +
+# Pass AnalysisB
+ggplot(alldatats[alldatats$Pass == "AnalysisB",], aes(x=DateTime, y=D47CDES.Final., color=Standard)) + geom_point() + geom_path() + facet_wrap(~Instrument) +
   scale_color_viridis_d() + theme_classic() + ylab(expression(paste(~Delta[47], " (CDES) \U2030"))) + xlab("Date")
   
-ggsave("standardtsb3.tiff", dpi=600, compression = "lzw", width = 8, scale = 1.3, units = "in")
+ggsave("standardtsAnalysisB.tiff", dpi=600, compression = "lzw", width = 8, scale = 1.3, units = "in")
 
-# Pass B2
-ggplot(alldatats[alldatats$Pass == "B2",], aes(x=DateTime, y=D47CDES.Final., color=Standard)) + geom_point() + geom_path() + facet_wrap(~Instrument) +
+# Pass AnalysisA
+ggplot(alldatats[alldatats$Pass == "AnalysisA",], aes(x=DateTime, y=D47CDES.Final., color=Standard)) + geom_point() + geom_path() + facet_wrap(~Instrument) +
   scale_color_viridis_d() + theme_classic() + ylab(expression(paste(~Delta[47], " (CDES) \U2030"))) + xlab("Date")
 
-ggsave("standardtsb2.tiff", dpi=600, compression = "lzw", width = 8, scale = 1.3, units = "in")
+ggsave("standardtsAnalysisA.tiff", dpi=600, compression = "lzw", width = 8, scale = 1.3, units = "in")
 
